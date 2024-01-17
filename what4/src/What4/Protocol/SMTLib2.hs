@@ -151,6 +151,7 @@ import qualified What4.Config as CFG
 import qualified What4.Expr.Builder as B
 import           What4.Expr.GroundEval
 import qualified What4.Interface as I
+import           What4.Panic
 import           What4.ProblemFeatures
 import           What4.Protocol.Online
 import           What4.Protocol.ReadDecimal
@@ -1333,8 +1334,10 @@ instance SMTLib2Tweaks a => SMTReadWriter (Writer a) where
           AckUnsat   -> Just $ Unsat ()
           AckUnknown -> Just Unknown
           _ -> Nothing
-    in getLimitedSolverResponse "sat result" satRsp s
-       (head $ reverse $ checkCommands p)
+        cmd = case reverse $ checkCommands p of
+                cmd':_ -> cmd'
+                []     -> panic "smtSatResult" ["Empty list of checkCommands"]
+    in getLimitedSolverResponse "sat result" satRsp s cmd
 
   smtUnsatAssumptionsResult p s =
     let unsatAssumpRsp = \case
